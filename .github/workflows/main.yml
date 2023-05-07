@@ -14,43 +14,26 @@ jobs:
           python3 -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           
-      - name: Test with Pytest
+      
+      - name: create coverage
         run: |
           pip3 install coverage
-          pwd && ls -la
-          python3 -m coverage run -m unittest src/main/python/helloworld.py 
+          pip3 install pytest
+          python3 -m coverage run -m unittest src/main/python/helloworld.py || true
           python3 -m coverage report
           python3 -m coverage html
           python3 -m coverage xml
-          pwd && ls -la
           
-      - name: Delete pull request on test failure
-        if: success() || failure()
-        env:
-          GITHUB_TOKEN: ${{ secrets.token }}    
+      - name: Test with Pytest
         run: |
-            curl -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/pooja03ydv/python-app/pulls/22/reviews -d '{"commit_id": "eca9604b1b851a6666e8b49d23e0111faa44a78f", "event": "REQUEST_CHANGES", "body": "Unit tests failed"}'
-   
-          
- 
-
+          python3 -m pytest -v src/main/python/helloworld.py >> log.txt
      
-          
-      - name: Delete pull request on test failure
-        if: success() || failure()
+      - name: Block Pull Request Merge (Unit Test Failures)
+        if: failure() && github.event_name == 'pull_request'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
-          gh pr comment ${{ github.event.pull_request.number }} --body "Test results:<br/>$(cat /home/runner/work/python-app/python-app/coverage.xml)"
-          gh pr comment ${{ github.event.pull_request.number }} --body "Test results:<br/>$(cat /home/runner/work/python-app/python-app/htmlcov/index.html)"
-          
-         
-
-          
-      
-          
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+            cat log.txt | grep -i "failed" > result.txt
+            cat /home/runner/work/call-reusable-ci-cd/call-reusable-ci-cd/htmlcov/index.html | grep  "report:." > coverage.txt
+            gh pr comment ${{ github.event.pull_request.number }} --body "Test results failed:<br/>$(cat result.txt)"
+            gh pr comment ${{ github.event.pull_request.number }} --body "Test results:<br/>$(cat coverage.txt)
