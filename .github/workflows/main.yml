@@ -34,6 +34,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
             cat log.txt | grep -i "failed" > result.txt
-            cat /home/runner/work/call-reusable-ci-cd/call-reusable-ci-cd/htmlcov/index.html | grep  "report:." > coverage.txt
+            cat /home/runner/work/python-app/python-app/htmlcov/index.html | grep  "report:." > coverage.txt
             gh pr comment ${{ github.event.pull_request.number }} --body "Test results failed:<br/>$(cat result.txt)"
             gh pr comment ${{ github.event.pull_request.number }} --body "Test results:<br/>$(cat coverage.txt)
