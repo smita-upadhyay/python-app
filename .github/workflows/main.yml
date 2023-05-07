@@ -31,7 +31,7 @@ jobs:
       - name: Block Pull Request Merge (Unit Test Failures)
         if: failure() && github.event_name == 'pull_request'
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
             cat log.txt | grep -i "failed" > result.txt
             cat /home/runner/work/call-reusable-ci-cd/call-reusable-ci-cd/htmlcov/index.html | grep  "report:." > coverage.txt
